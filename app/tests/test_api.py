@@ -15,6 +15,7 @@ class FakeDocumentService:
             id="doc-1",
             document_type="Formato de cumplimiento",
             confidence=0.98,
+            data={"campo": "valor"},
             processing_time_ms=42,
             created_at="2026-07-28T00:00:00Z",
         )

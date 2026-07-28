@@ -2,12 +2,14 @@ from __future__ import annotations
 
 from io import BytesIO
 from pathlib import Path
+from typing import Any
 
 from fastapi import UploadFile
 
 from app.classifiers.base import DocumentClassifier
 from app.repositories.document_repository import InMemoryDocumentRepository
 from app.schemas.common import ClassificationResult
+from app.services.document_extractor import AzureDocumentExtractor
 from app.services.document_processor import DocumentProcessingService
 
 
@@ -18,6 +20,14 @@ class DummyClassifier(DocumentClassifier):
 
 class DummySettings:
     temp_dir = Path("/tmp")
+
+
+class DummyExtractor(AzureDocumentExtractor):
+    def __init__(self) -> None:
+        pass
+
+    def extract(self, document_type: str, pdf_path: Path) -> dict[str, Any]:
+        return {"campo": "valor", "tipo": document_type}
 
 
 def test_document_processing_service(monkeypatch) -> None:
@@ -36,6 +46,7 @@ def test_document_processing_service(monkeypatch) -> None:
 
     service = DocumentProcessingService(
         classifier=DummyClassifier(),
+        extractor=DummyExtractor(),
         repository=InMemoryDocumentRepository(),
         settings=DummySettings(),
     )
@@ -44,4 +55,5 @@ def test_document_processing_service(monkeypatch) -> None:
     result = service.process(upload)
 
     assert result.document_type == "Orden de compra A"
+    assert result.data["campo"] == "valor"
     assert service.get_document(result.id).id == result.id

@@ -31,3 +31,15 @@ class AzureDocumentIntelligenceService:
             raise ModelTimeoutError(f"Azure classifier request failed: {exc}") from exc
         except HttpResponseError as exc:
             raise ApiProviderError(f"Azure classifier request failed: {exc}") from exc
+
+    def analyze_document(self, model_id: str, document_bytes: bytes) -> Any:
+        try:
+            poller = self._client.begin_analyze_document(
+                model_id=model_id,
+                body=BytesIO(document_bytes),
+            )
+            return poller.result()
+        except ServiceRequestError as exc:
+            raise ModelTimeoutError(f"Azure extraction request failed: {exc}") from exc
+        except HttpResponseError as exc:
+            raise ApiProviderError(f"Azure extraction request failed: {exc}") from exc

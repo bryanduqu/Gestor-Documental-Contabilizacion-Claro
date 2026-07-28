@@ -14,6 +14,10 @@ class ClassificationError(DocumentProcessingError):
     """Raised when the classifier fails."""
 
 
+class ExtractionError(DocumentProcessingError):
+    """Raised when the extraction stage fails."""
+
+
 class ModelTimeoutError(DocumentProcessingError):
     """Raised when the model request times out."""
 

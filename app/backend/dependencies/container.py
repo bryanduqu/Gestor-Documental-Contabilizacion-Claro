@@ -3,9 +3,10 @@ from __future__ import annotations
 from functools import lru_cache
 
 from app.classifiers.azure_classifier import AzureDocumentIntelligenceClassifier
-from app.config.settings import Settings, get_settings
+from app.config.settings import Settings, get_extraction_model_mapping, get_settings
 from app.repositories.document_repository import InMemoryDocumentRepository
 from app.services.azure_document_intelligence import AzureDocumentIntelligenceService
+from app.services.document_extractor import AzureDocumentExtractor
 from app.services.document_processor import DocumentProcessingService
 
 
@@ -23,8 +24,13 @@ class Container:
             azure_client=self.azure_client,
             classifier_id=self.settings.azure_document_intelligence_classifier_id,
         )
+        self.extractor = AzureDocumentExtractor(
+            azure_client=self.azure_client,
+            extraction_models=get_extraction_model_mapping(self.settings),
+        )
         self.document_service = DocumentProcessingService(
             classifier=self.classifier,
+            extractor=self.extractor,
             repository=self.repository,
             settings=self.settings,
         )

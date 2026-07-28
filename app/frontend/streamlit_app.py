@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+from typing import Any
 import requests
 import streamlit as st
 
@@ -9,12 +10,26 @@ import streamlit as st
 API_BASE_URL = os.getenv("FRONTEND_API_BASE_URL", "http://localhost:8000")
 
 
+def flatten_payload(payload: dict[str, Any], prefix: str = "") -> list[dict[str, Any]]:
+    """Flatten nested JSON for table display."""
+    rows: list[dict[str, Any]] = []
+    for key, value in payload.items():
+        full_key = f"{prefix}.{key}" if prefix else key
+        if isinstance(value, dict):
+            rows.extend(flatten_payload(value, full_key))
+        elif isinstance(value, list):
+            rows.append({"field": full_key, "value": json.dumps(value, ensure_ascii=False)})
+        else:
+            rows.append({"field": full_key, "value": value})
+    return rows
+
+
 def main() -> None:
     st.set_page_config(page_title="Document AI Pipeline", layout="wide")
     st.title("Document AI Pipeline")
     st.write(
-        "Sube un PDF. Se toma la primera página, se convierte en imagen y se "
-        "envía al custom classification model de Azure Document Intelligence."
+        "Sube un PDF. Se clasifica usando la primera página y luego se enruta al "
+        "modelo de extracción configurado para ese tipo documental."
     )
 
     uploaded_file = st.file_uploader("Selecciona un PDF", type=["pdf"])
@@ -41,6 +56,7 @@ def main() -> None:
                 return
 
             status.write("2. Clasificación completada")
+            status.write("3. Extracción completada")
             status.update(label="Proceso finalizado", state="complete")
             result = response.json()
 
@@ -60,10 +76,16 @@ def main() -> None:
             }
         )
 
+        st.subheader("Datos extraídos")
+        st.json(result["data"])
+
+        st.subheader("Tabla de campos")
+        st.dataframe(flatten_payload(result["data"]), use_container_width=True)
+
         st.download_button(
             label="Descargar resultado JSON",
             data=json.dumps(result, indent=2, ensure_ascii=False),
-            file_name=f'classificacion_{result["id"]}.json',
+            file_name=f'documento_{result["id"]}.json',
             mime="application/json",
         )
 
