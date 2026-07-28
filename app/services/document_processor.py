@@ -12,6 +12,7 @@ from app.classifiers.base import DocumentClassifier
 from app.repositories.document_repository import InMemoryDocumentRepository
 from app.schemas.common import ProcessedDocumentResponse
 from app.services.document_extractor import AzureDocumentExtractor
+from app.utils.azure_parsing import extract_layout_headers
 from app.utils.file_utils import save_upload_temporarily
 from app.utils.pdf_utils import extract_first_page_image
 
@@ -43,12 +44,16 @@ class DocumentProcessingService:
                 extract_first_page_image(pdf_path)
             )
             extracted_data = self._extractor.extract(classification.type, pdf_path)
+            layout_tables = self._extractor.extract_layout_tables(pdf_path)
+            layout_headers = extract_layout_headers(layout_tables)
 
             result = ProcessedDocumentResponse(
                 id=str(uuid4()),
                 document_type=classification.type,
                 confidence=classification.confidence,
                 data=extracted_data,
+                layout_tables=layout_tables,
+                layout_headers=layout_headers,
                 processing_time_ms=int((time.perf_counter() - started_at) * 1000),
                 created_at=datetime.now(timezone.utc),
             )

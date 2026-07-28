@@ -4,7 +4,11 @@ from pathlib import Path
 from typing import Any
 
 from app.services.azure_document_intelligence import AzureDocumentIntelligenceService
-from app.utils.azure_parsing import extract_fields_payload, resolve_extraction_model_id
+from app.utils.azure_parsing import (
+    extract_fields_payload,
+    extract_layout_tables,
+    resolve_extraction_model_id,
+)
 from app.utils.errors import ExtractionError
 
 
@@ -31,3 +35,8 @@ class AzureDocumentExtractor:
             document_bytes=pdf_path.read_bytes(),
         )
         return extract_fields_payload(result)
+
+    def extract_layout_tables(self, pdf_path: Path) -> list[dict[str, Any]]:
+        """Extract tables using Azure prebuilt-layout."""
+        result = self._azure_client.analyze_layout(pdf_path.read_bytes())
+        return extract_layout_tables(result)

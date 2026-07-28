@@ -16,6 +16,8 @@ class ProcessedDocumentResponse(BaseModel):
     document_type: str = Field(min_length=1)
     confidence: float | None = Field(default=None, ge=0.0, le=1.0)
     data: dict[str, Any]
+    layout_tables: list[dict[str, Any]] = Field(default_factory=list)
+    layout_headers: dict[str, Any] = Field(default_factory=dict)
     processing_time_ms: int = Field(ge=0)
     created_at: datetime
 

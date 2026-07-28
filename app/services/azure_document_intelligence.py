@@ -43,3 +43,16 @@ class AzureDocumentIntelligenceService:
             raise ModelTimeoutError(f"Azure extraction request failed: {exc}") from exc
         except HttpResponseError as exc:
             raise ApiProviderError(f"Azure extraction request failed: {exc}") from exc
+
+    def analyze_layout(self, document_bytes: bytes) -> Any:
+        """Run Azure prebuilt-layout to obtain table structure."""
+        try:
+            poller = self._client.begin_analyze_document(
+                model_id="prebuilt-layout",
+                body=BytesIO(document_bytes),
+            )
+            return poller.result()
+        except ServiceRequestError as exc:
+            raise ModelTimeoutError(f"Azure layout request failed: {exc}") from exc
+        except HttpResponseError as exc:
+            raise ApiProviderError(f"Azure layout request failed: {exc}") from exc
