@@ -11,6 +11,7 @@ from app.repositories.document_repository import InMemoryDocumentRepository
 from app.schemas.common import ClassificationResult
 from app.services.document_extractor import AzureDocumentExtractor
 from app.services.document_processor import DocumentProcessingService
+from app.utils.azure_parsing import resolve_extraction_model_id
 
 
 class DummyClassifier(DocumentClassifier):
@@ -28,6 +29,39 @@ class DummyExtractor(AzureDocumentExtractor):
 
     def extract(self, document_type: str, pdf_path: Path) -> dict[str, Any]:
         return {"campo": "valor", "tipo": document_type}
+
+    def extract_layout_tables(self, pdf_path: Path) -> list[dict[str, Any]]:
+        return [
+            {
+                "table_index": 1,
+                "row_count": 2,
+                "column_count": 2,
+                "page_numbers": [1],
+                "header_rows": [["Header A", "Header B"]],
+                "header_fields": [
+                    {
+                        "content": "Header A",
+                        "row_index": 0,
+                        "column_index": 0,
+                        "row_span": 1,
+                        "column_span": 1,
+                        "kind": "columnHeader",
+                        "merged_label": "Header A",
+                    },
+                    {
+                        "content": "Header B",
+                        "row_index": 0,
+                        "column_index": 1,
+                        "row_span": 1,
+                        "column_span": 1,
+                        "kind": "columnHeader",
+                        "merged_label": "Header B",
+                    },
+                ],
+                "rows": [["Header A", "Header B"], ["A", "B"]],
+                "cells": [],
+            }
+        ]
 
 
 def test_document_processing_service(monkeypatch) -> None:
@@ -56,4 +90,17 @@ def test_document_processing_service(monkeypatch) -> None:
 
     assert result.document_type == "Orden de compra A"
     assert result.data["campo"] == "valor"
+    assert result.layout_tables[0]["rows"][1][0] == "A"
+    assert "Header A" in result.layout_headers["all_headers"]
     assert service.get_document(result.id).id == result.id
+
+
+def test_resolve_extraction_model_id_ignores_accents() -> None:
+    extraction_models = {
+        "Entrada de mercancía": "modelo_em",
+    }
+
+    assert (
+        resolve_extraction_model_id("Entrada de Mercancia", extraction_models)
+        == "modelo_em"
+    )

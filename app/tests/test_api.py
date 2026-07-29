@@ -16,6 +16,8 @@ class FakeDocumentService:
             document_type="Formato de cumplimiento",
             confidence=0.98,
             data={"campo": "valor"},
+            layout_tables=[{"table_index": 1, "row_count": 1, "column_count": 1, "page_numbers": [1], "rows": [["X"]], "cells": []}],
+            layout_headers={"all_headers": ["Header X"], "header_occurrences": [{"table_index": 1, "page_numbers": [1], "content": "Header X", "merged_label": "Header X", "row_index": 0, "column_index": 0, "kind": "columnHeader"}]},
             processing_time_ms=42,
             created_at="2026-07-28T00:00:00Z",
         )
