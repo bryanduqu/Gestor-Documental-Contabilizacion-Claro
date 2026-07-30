@@ -18,6 +18,8 @@ class ProcessedDocumentResponse(BaseModel):
     data: dict[str, Any]
     layout_tables: list[dict[str, Any]] = Field(default_factory=list)
     layout_headers: dict[str, Any] = Field(default_factory=dict)
+    line_items_table: dict[str, Any] = Field(default_factory=dict)
+    totals_summary: dict[str, Any] = Field(default_factory=dict)
     processing_time_ms: int = Field(ge=0)
     created_at: datetime
 

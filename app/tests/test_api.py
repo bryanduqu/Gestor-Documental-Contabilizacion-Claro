@@ -18,6 +18,8 @@ class FakeDocumentService:
             data={"campo": "valor"},
             layout_tables=[{"table_index": 1, "row_count": 1, "column_count": 1, "page_numbers": [1], "rows": [["X"]], "cells": []}],
             layout_headers={"all_headers": ["Header X"], "header_occurrences": [{"table_index": 1, "page_numbers": [1], "content": "Header X", "merged_label": "Header X", "row_index": 0, "column_index": 0, "kind": "columnHeader"}]},
+            line_items_table={"headers": ["Pos.", "Material"], "canonical_headers": ["pos", "material"], "rows": [["10", "3030708"]], "normalized_rows": [{"pos": "10", "material": "3030708"}], "source_table_indexes": [1], "page_numbers": [1]},
+            totals_summary={"total_bruto": "100 COP", "iva": "19 COP"},
             processing_time_ms=42,
             created_at="2026-07-28T00:00:00Z",
         )
@@ -46,6 +48,8 @@ def test_upload_endpoint_returns_processed_document() -> None:
 
     assert response.status_code == 200
     assert response.json()["document_type"] == "Formato de cumplimiento"
+    assert response.json()["line_items_table"]["rows"][0][0] == "10"
+    assert response.json()["totals_summary"]["total_bruto"] == "100 COP"
 
 
 def test_get_document_endpoint_returns_processed_document() -> None:

@@ -7,6 +7,7 @@ from app.services.azure_document_intelligence import AzureDocumentIntelligenceSe
 from app.utils.azure_parsing import (
     extract_fields_payload,
     extract_layout_tables,
+    extract_layout_text_lines,
     resolve_extraction_model_id,
 )
 from app.utils.errors import ExtractionError
@@ -36,7 +37,13 @@ class AzureDocumentExtractor:
         )
         return extract_fields_payload(result)
 
-    def extract_layout_tables(self, pdf_path: Path) -> list[dict[str, Any]]:
-        """Extract tables using Azure prebuilt-layout."""
+    def extract_layout_analysis(self, pdf_path: Path) -> dict[str, Any]:
+        """Extract layout tables and OCR lines using Azure prebuilt-layout."""
         result = self._azure_client.analyze_layout(pdf_path.read_bytes())
-        return extract_layout_tables(result)
+        return {
+            "tables": extract_layout_tables(result),
+            "text_lines": extract_layout_text_lines(result),
+        }
+
+    def extract_layout_tables(self, pdf_path: Path) -> list[dict[str, Any]]:
+        return self.extract_layout_analysis(pdf_path)["tables"]

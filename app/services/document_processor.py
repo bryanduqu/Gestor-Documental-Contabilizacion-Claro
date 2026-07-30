@@ -12,7 +12,11 @@ from app.classifiers.base import DocumentClassifier
 from app.repositories.document_repository import InMemoryDocumentRepository
 from app.schemas.common import ProcessedDocumentResponse
 from app.services.document_extractor import AzureDocumentExtractor
-from app.utils.azure_parsing import extract_layout_headers
+from app.utils.azure_parsing import (
+    extract_layout_headers,
+    extract_line_items_table,
+    extract_totals_summary,
+)
 from app.utils.file_utils import save_upload_temporarily
 from app.utils.pdf_utils import extract_first_page_image
 
@@ -44,8 +48,20 @@ class DocumentProcessingService:
                 extract_first_page_image(pdf_path)
             )
             extracted_data = self._extractor.extract(classification.type, pdf_path)
-            layout_tables = self._extractor.extract_layout_tables(pdf_path)
+            layout_analysis = self._extractor.extract_layout_analysis(pdf_path)
+            layout_tables = layout_analysis.get("tables", [])
+            layout_text_lines = layout_analysis.get("text_lines", [])
             layout_headers = extract_layout_headers(layout_tables)
+            line_items_table = extract_line_items_table(
+                classification.type,
+                layout_tables,
+            )
+            totals_summary = extract_totals_summary(
+                classification.type,
+                extracted_data,
+                layout_tables,
+                layout_text_lines,
+            )
 
             result = ProcessedDocumentResponse(
                 id=str(uuid4()),
@@ -54,6 +70,8 @@ class DocumentProcessingService:
                 data=extracted_data,
                 layout_tables=layout_tables,
                 layout_headers=layout_headers,
+                line_items_table=line_items_table,
+                totals_summary=totals_summary,
                 processing_time_ms=int((time.perf_counter() - started_at) * 1000),
                 created_at=datetime.now(timezone.utc),
             )
