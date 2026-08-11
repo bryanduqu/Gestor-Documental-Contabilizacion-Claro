@@ -31,6 +31,18 @@ def normalize_label(value: str) -> str:
     )
 
 
+DOCUMENT_TYPE_ALIASES = {
+    normalize_label("Formato de cumplimiento COP"): normalize_label("Formato de cumplimiento"),
+    normalize_label("Formato de cumplimiento USD"): normalize_label("Formato de cumplimiento"),
+}
+
+
+def normalize_document_type(value: str) -> str:
+    """Normalize document types and collapse known subtypes to a base profile."""
+    normalized = normalize_label(value)
+    return DOCUMENT_TYPE_ALIASES.get(normalized, normalized)
+
+
 LINE_ITEM_DOCUMENT_PROFILES = {
     normalize_label("Entrada de mercancia"): {
         "columns": [
@@ -402,7 +414,7 @@ def extract_line_items_table(
     tables: list[dict[str, Any]],
 ) -> dict[str, Any]:
     """Extract a single consolidated items table for supported document types."""
-    normalized_document_type = normalize_label(document_type)
+    normalized_document_type = normalize_document_type(document_type)
     profile = LINE_ITEM_DOCUMENT_PROFILES.get(normalized_document_type)
     if not profile:
         return {}
@@ -501,7 +513,7 @@ def extract_totals_summary(
     layout_text_lines: list[str] | None = None,
 ) -> dict[str, Any]:
     """Extract totals summary for supported commercial documents."""
-    if normalize_label(document_type) not in TOTALS_SUPPORTED_DOCUMENT_TYPES:
+    if normalize_document_type(document_type) not in TOTALS_SUPPORTED_DOCUMENT_TYPES:
         return {}
 
     totals: dict[str, Any] = {}
