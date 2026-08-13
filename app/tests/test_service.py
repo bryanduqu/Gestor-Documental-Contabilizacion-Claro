@@ -7,7 +7,6 @@ from typing import Any
 from fastapi import UploadFile
 
 from app.classifiers.base import DocumentClassifier
-from app.classifiers.routing_classifier import RoutingDocumentClassifier
 from app.repositories.document_repository import InMemoryDocumentRepository
 from app.schemas.common import ClassificationResult
 from app.services.document_extractor import AzureDocumentExtractor
@@ -22,17 +21,6 @@ from app.utils.azure_parsing import (
 class DummyClassifier(DocumentClassifier):
     def classify(self, first_page_image: bytes) -> ClassificationResult:
         return ClassificationResult(type="Entrada de Mercancia", confidence=0.99)
-
-
-class SequenceClassifier(DocumentClassifier):
-    def __init__(self, result_type: str, confidence: float) -> None:
-        self.result_type = result_type
-        self.confidence = confidence
-        self.calls = 0
-
-    def classify(self, first_page_image: bytes) -> ClassificationResult:
-        self.calls += 1
-        return ClassificationResult(type=self.result_type, confidence=self.confidence)
 
 
 class DummySettings:
@@ -212,40 +200,6 @@ def test_document_processing_service(monkeypatch) -> None:
     assert result.line_items_table["source_table_indexes"] == [1]
     assert result.totals_summary["total_bruto"] == "578.076.994,00 COP"
     assert service.get_document(result.id).id == result.id
-
-
-def test_routing_classifier_uses_specialized_classifier_for_formato_cumplimiento() -> None:
-    primary = SequenceClassifier("Formato de cumplimiento", 0.82)
-    specialized = SequenceClassifier("Formato de cumplimiento USD", 0.91)
-    classifier = RoutingDocumentClassifier(
-        primary_classifier=primary,
-        specialized_classifier=specialized,
-        routed_labels={"Formato de cumplimiento"},
-    )
-
-    result = classifier.classify(b"image")
-
-    assert result.type == "Formato de cumplimiento USD"
-    assert result.confidence == 0.91
-    assert primary.calls == 1
-    assert specialized.calls == 1
-
-
-def test_routing_classifier_keeps_primary_result_for_non_routed_labels() -> None:
-    primary = SequenceClassifier("Orden de compra A", 0.97)
-    specialized = SequenceClassifier("Formato de cumplimiento USD", 0.91)
-    classifier = RoutingDocumentClassifier(
-        primary_classifier=primary,
-        specialized_classifier=specialized,
-        routed_labels={"Formato de cumplimiento"},
-    )
-
-    result = classifier.classify(b"image")
-
-    assert result.type == "Orden de compra A"
-    assert result.confidence == 0.97
-    assert primary.calls == 1
-    assert specialized.calls == 0
 
 
 def test_resolve_extraction_model_id_ignores_accents() -> None:

@@ -27,7 +27,6 @@ class Settings(BaseSettings):
     azure_document_intelligence_endpoint: str = Field(default="")
     azure_document_intelligence_key: str = Field(default="")
     azure_document_intelligence_classifier_id: str = Field(default="")
-    azure_document_intelligence_formato_cumplimiento_classifier_id: str = Field(default="")
     azure_document_intelligence_extraction_models: str = "{}"
     frontend_api_base_url: str = "http://localhost:8000"
 
